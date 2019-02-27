@@ -1,20 +1,44 @@
-version: '3'
+version: '3.4'
+
 services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:6.2.4
+    restart: unless-stopped
     environment:
       discovery.type: single-node
-    ports:
-      - 9200:9200
-      - 9300:9300
+    networks:
+      operations_intranet:
+        ipv4_address: 172.30.91.2
+        aliases:
+          - elastisearch
+    deploy:
+      placement:
+        constraints:
+          - node.labels.type == intranet
+ #    ports:
+ #     - 9200:9200
+ #     - 9300:9300
 
   fluentd:
     build: ./fluentd
+    image: registry.liquibrium.com/fluentd
+    container_name: fluentd
+    external_links:
+      - container-registry
     volumes:
       - ./fluentd/conf:/fluentd/etc
-      - ./logs:/logs
-    ports:
-      - 8080:8080
+      - ${DATA_DIR}/logs:/logs
+#    ports:
+#     - 8080:8080
+    networks:
+      operations_intranet:
+        ipv4_address: 172.30.91.3
+        aliases:
+          - elastisearch
+    deploy:
+      placement:
+        constraints:
+          - node.labels.type == intranet
 
   kibana:
     image: docker.elastic.co/kibana/kibana:6.2.4
@@ -22,3 +46,36 @@ services:
       ELASTICSEARCH_URL: http://elasticsearch:9200
     ports:
       - 5601:5601
+    networks:
+      operations_intranet:
+        ipv4_address: 172.30.91.4
+        aliases:
+          - elastisearch
+    deploy:
+      placement:
+        constraints:
+          - node.labels.type == intranet
+
+  proxy-kibana:
+    build: ./proxy-kibana
+    image: registry.liquibrium.com/proxy-kibana
+    container_name: kibana-proxy
+    external_links:
+      - container-registry
+    depends_on:
+      - kibana
+    environment:
+      VIRTUAL_HOST: logs.liquibrium.local
+      NETWORK_ACCESS: internal
+    networks:
+      operations_intranet:
+        ipv4_address: 172.30.91.5
+    deploy:
+      placement:
+        constraints:
+          - node.labels.type == intranet
+          - node.labels.proxy == true
+
+networks:
+  operations_intranet:
+    external: true
