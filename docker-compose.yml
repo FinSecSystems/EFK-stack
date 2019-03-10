@@ -23,7 +23,7 @@ services:
       placement:
         constraints:
           - node.labels.type == intranet
-          - node.labels.proxy == false
+          - node.labels.proxy == true #Hack as elasticsearch does not work well with glusterfs 4.3, Need to upgrade to 5.0
     ulimits:
       memlock:
         soft: -1
@@ -34,7 +34,7 @@ services:
     container_name: dejavu
     networks:
       operations_intranet:
-        ipv4_address: 172.30.91.6
+        ipv4_address: 172.30.91.3
         aliases:
           - dejavu
     deploy:
@@ -58,7 +58,7 @@ services:
       - "9880:9880/udp"
     networks:
       operations_intranet:
-        ipv4_address: 172.30.91.3
+        ipv4_address: 172.30.91.4
         aliases:
           - fluentd
     deploy:
@@ -74,7 +74,7 @@ services:
       - ${DATA_DIR}/kibana/:/usr/share/kibana/config/
     networks:
       operations_intranet:
-        ipv4_address: 172.30.91.4
+        ipv4_address: 172.30.91.5
         aliases:
           - kibana
     deploy:
