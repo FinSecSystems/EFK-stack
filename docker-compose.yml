@@ -2,22 +2,44 @@ version: '3.4'
 
 services:
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:6.2.4
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.6.1
     restart: unless-stopped
     environment:
-      discovery.type: single-node
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "http.port=9200"
+      - "http.cors.allow-origin=*"
+      - "http.cors.enabled=true"
+      - "http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization"
+      - "http.cors.allow-credentials=true"
+    volumes:
+      - ${DATA_DIR}/elasticsearch:/usr/share/elasticsearch/data
     networks:
       operations_intranet:
         ipv4_address: 172.30.91.2
         aliases:
-          - elastisearch
+          - elasticsearch
     deploy:
       placement:
         constraints:
           - node.labels.type == intranet
- #    ports:
- #     - 9200:9200
- #     - 9300:9300
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+
+  dejavu:
+    image: appbaseio/dejavu:latest
+    container_name: dejavu
+    networks:
+      operations_intranet:
+        ipv4_address: 172.30.91.6
+        aliases:
+          - dejavu
+    deploy:
+      placement:
+        constraints:
+          - node.labels.type == intranet
 
   fluentd:
     build: ./fluentd
@@ -28,29 +50,32 @@ services:
     volumes:
       - ./fluentd/conf:/fluentd/etc
       - ${DATA_DIR}/logs:/logs
-#    ports:
-#     - 8080:8080
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+      - "9880:9880"
+      - "9880:9880/udp"
     networks:
       operations_intranet:
         ipv4_address: 172.30.91.3
         aliases:
-          - elastisearch
+          - fluentd
     deploy:
       placement:
         constraints:
           - node.labels.type == intranet
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:6.2.4
+    image: docker.elastic.co/kibana/kibana:6.6.1
     environment:
       ELASTICSEARCH_URL: http://elasticsearch:9200
-    ports:
-      - 5601:5601
+    volumes:
+      - ${DATA_DIR}/kibana/:/usr/share/kibana/config/
     networks:
       operations_intranet:
         ipv4_address: 172.30.91.4
         aliases:
-          - elastisearch
+          - kibana
     deploy:
       placement:
         constraints:
@@ -70,6 +95,26 @@ services:
     networks:
       operations_intranet:
         ipv4_address: 172.30.91.5
+    deploy:
+      placement:
+        constraints:
+          - node.labels.type == intranet
+          - node.labels.proxy == true
+
+  proxy-dejavu:
+    build: ./proxy-dejavu
+    image: registry.liquibrium.com/proxy-dejavu
+    container_name: dejavu-proxy
+    external_links:
+      - container-registry
+    depends_on:
+      - dejavu
+    environment:
+      VIRTUAL_HOST: dejavu.liquibrium.local
+      NETWORK_ACCESS: internal
+    networks:
+      operations_intranet:
+        ipv4_address: 172.30.91.7
     deploy:
       placement:
         constraints:
