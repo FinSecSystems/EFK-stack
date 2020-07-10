@@ -44,7 +44,7 @@ services:
 
   fluentd:
     build: ./fluentd
-    image: registry.liquibrium.com/fluentd
+    image: registry.liquibrium.local/fluentd
     container_name: fluentd
     external_links:
       - container-registry
@@ -84,7 +84,7 @@ services:
 
   proxy-kibana:
     build: ./proxy-kibana
-    image: registry.liquibrium.com/proxy-kibana
+    image: registry.liquibrium.local/proxy-kibana
     container_name: kibana-proxy
     external_links:
       - container-registry
@@ -104,7 +104,7 @@ services:
 
   proxy-dejavu:
     build: ./proxy-dejavu
-    image: registry.liquibrium.com/proxy-dejavu
+    image: registry.liquibrium.local/proxy-dejavu
     container_name: dejavu-proxy
     external_links:
       - container-registry
