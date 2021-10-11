@@ -3,27 +3,28 @@ version: '3.4'
 services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.4.2
+    container_name: logs-elasticsearch
     restart: unless-stopped
+    dns: ${DNS_IP_INTERNAL}
+    external_links:
+      - operations-dns
     environment:
       - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
       - "http.port=9200"
-      - "http.cors.allow-origin=*"
+      - "http.cors.allow-origin=*,https://elastic.logs.finsec.localdomain,https://dejavu.finsec.localdomain"
       - "http.cors.enabled=true"
       - "http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization"
       - "http.cors.allow-credentials=true"
     volumes:
-      - ${BUILD_DIR}/elasticsearch:/usr/share/elasticsearch/data
+      - ${DB_DIR}/logselasticsearch:/usr/share/elasticsearch/data
+    ports:
+      - "${LOG_SERVER_IP}:9200:9200"
     networks:
       operations_intranet:
-        ipv4_address: 172.30.91.2
+        ipv4_address: 172.34.19.2
         aliases:
           - elasticsearch
-    deploy:
-      placement:
-        constraints:
-          - node.labels.type == intranet
-          - node.labels.proxy == true #Hack as elasticsearch does not work well with glusterfs 4.3, Need to upgrade to 5.0
     ulimits:
       memlock:
         soft: -1
@@ -31,96 +32,183 @@ services:
 
   dejavu:
     image: appbaseio/dejavu:latest
-    container_name: dejavu
+    container_name: logs-dejavu
+    dns: ${DNS_IP_INTERNAL}
+    external_links:
+      - operations-dns
+    depends_on:
+      - elasticsearch
     networks:
       operations_intranet:
-        ipv4_address: 172.30.91.3
+        ipv4_address: 172.34.19.3
         aliases:
           - dejavu
-    deploy:
-      placement:
-        constraints:
-          - node.labels.type == intranet
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: logger.finsec.localdomain:24224
+        tag: "{{.Name}}.{{.ID}}"
+        fluentd-async: "true"
 
   fluentd:
     build: ./fluentd
-    image: registry.liquibrium.local/fluentd
-    container_name: fluentd
+    image: registry.finsec.localdomain/fluentd
+    container_name: logs-fluentd
+    dns: ${DNS_IP_INTERNAL}
     external_links:
-      - container-registry
+      - operations-dns
+    depends_on:
+      - elasticsearch
     volumes:
       - ./fluentd/conf:/fluentd/etc
-      - ${DATA_DIR}/logs:/logs
+      - ${DATA_DIR}/logs/fluentd:/logs
     ports:
-      - "24224:24224"
-      - "24224:24224/udp"
-      - "9880:9880"
-      - "9880:9880/udp"
+      - "${LOG_SERVER_IP}:24224:24224"
+      - "${LOG_SERVER_IP}:24224:24224/udp"
+      - "${LOG_SERVER_IP}:9880:9880"
+      - "${LOG_SERVER_IP}:9880:9880/udp"
     networks:
       operations_intranet:
-        ipv4_address: 172.30.91.4
+        ipv4_address: 172.34.19.4
         aliases:
           - fluentd
-    deploy:
-      placement:
-        constraints:
-          - node.labels.type == intranet
 
   kibana:
     image: docker.elastic.co/kibana/kibana:7.4.2
+    container_name: logs-kibana
+    dns: ${DNS_IP_INTERNAL}
+    external_links:
+      - operations-dns
+    depends_on:
+      - elasticsearch
+      - fluentd
     environment:
-      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELASTICSEARCH_URL: http://logs-elasticsearch:9200
     volumes:
-      - ${DATA_DIR}/kibana/:/usr/share/kibana/config/
+      - ${DATA_DIR}/logs/kibana/:/usr/share/kibana/config/
     networks:
       operations_intranet:
-        ipv4_address: 172.30.91.5
+        ipv4_address: 172.34.19.5
         aliases:
           - kibana
-    deploy:
-      placement:
-        constraints:
-          - node.labels.type == intranet
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: logger.finsec.localdomain:24224
+        tag: "{{.Name}}.{{.ID}}"
+        fluentd-async: "true"
 
-  proxy-kibana:
-    build: ./proxy-kibana
-    image: registry.liquibrium.local/proxy-kibana
-    container_name: kibana-proxy
+  kibana-proxy-internal:
+    image: registry.finsec.localdomain/proxy-nginx
+    container_name: logs-kibana-proxy-internal
+    dns: ${DNS_IP_INTERNAL}
     external_links:
-      - container-registry
+      - operations-dns
+      - operations-proxy
+    healthcheck:
+      test: ["CMD", "curl", "-k", "-f", "http://logs-kibana-proxy-internal"]
+      interval: 60s
+      timeout: 120s
+      start_period: 100s
+      retries: 5
     depends_on:
       - kibana
+      - fluentd
     environment:
-      VIRTUAL_HOST: logs.liquibrium.local
+      VIRTUAL_HOST: logs.finsec.localdomain
       NETWORK_ACCESS: internal
+    volumes:
+      - ./kibana-nginx.conf:/etc/nginx/nginx.conf:ro
     networks:
       operations_intranet:
-        ipv4_address: 172.30.91.5
-    deploy:
-      placement:
-        constraints:
-          - node.labels.type == intranet
-          - node.labels.proxy == true
+        ipv4_address: 172.34.19.6
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: logger.finsec.localdomain:24224
+        tag: "{{.Name}}.{{.ID}}"
+        fluentd-async: "true"
 
-  proxy-dejavu:
-    build: ./proxy-dejavu
-    image: registry.liquibrium.local/proxy-dejavu
-    container_name: dejavu-proxy
-    external_links:
-      - container-registry
+  dejavu-proxy-internal:
+    image: registry.finsec.localdomain/proxy-nginx
+    container_name: logs-dejavu-proxy-internal
+    dns: ${DNS_IP_INTERNAL}
     depends_on:
       - dejavu
+      - fluentd
+    external_links:
+      - operations-dns
+      - operations-proxy
+    healthcheck:
+      test: ["CMD", "curl", "-k", "-f", "http://logs-dejavu-proxy-internal"]
+      interval: 60s
+      timeout: 120s
+      start_period: 100s
+      retries: 5
     environment:
-      VIRTUAL_HOST: dejavu.liquibrium.local
+      VIRTUAL_HOST: dejavu.finsec.localdomain
       NETWORK_ACCESS: internal
+    volumes:
+      - ./dejavu-nginx.conf:/etc/nginx/nginx.conf:ro
     networks:
       operations_intranet:
-        ipv4_address: 172.30.91.7
-    deploy:
-      placement:
-        constraints:
-          - node.labels.type == intranet
-          - node.labels.proxy == true
+        ipv4_address: 172.34.19.7
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: logger.finsec.localdomain:24224
+        tag: "{{.Name}}.{{.ID}}"
+        fluentd-async: "true"
+
+  elasticvue:
+    image: cars10/elasticvue
+    container_name: logs-elasticvue
+    dns: ${DNS_IP_INTERNAL}
+    external_links:
+      - operations-dns
+    depends_on:
+      - elasticsearch
+      - fluentd
+    networks:
+      operations_intranet:
+        ipv4_address: 172.34.19.8
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: logger.finsec.localdomain:24224
+        tag: "{{.Name}}.{{.ID}}"
+        fluentd-async: "true"
+        
+  elasticvue-proxy-internal:
+    image: registry.finsec.localdomain/proxy-nginx
+    container_name: logs-elasticvue-proxy-internal
+    dns: ${DNS_IP_INTERNAL}
+    depends_on:
+      - elasticvue
+      - fluentd
+    external_links:
+      - operations-dns
+      - operations-proxy
+    healthcheck:
+      test: ["CMD", "curl", "-k", "-f", "http://logs-elasticvue-proxy-internal"]
+      interval: 60s
+      timeout: 120s
+      start_period: 100s
+      retries: 5
+    environment:
+      VIRTUAL_HOST: elastic.logs.finsec.localdomain
+      NETWORK_ACCESS: internal
+    volumes:
+      - ./elasticvue-nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      operations_intranet:
+        ipv4_address: 172.34.19.9
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: logger.finsec.localdomain:24224
+        tag: "{{.Name}}.{{.ID}}"
+        fluentd-async: "true"
 
 networks:
   operations_intranet:
