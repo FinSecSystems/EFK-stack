@@ -4,10 +4,10 @@ services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.4.2
     container_name: logs-elasticsearch
-    restart: unless-stopped
+    restart: always
     dns: ${DNS_IP_INTERNAL}
     external_links:
-      - operations-dns
+      - operations:dns
     environment:
       - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
@@ -33,9 +33,10 @@ services:
   dejavu:
     image: appbaseio/dejavu:latest
     container_name: logs-dejavu
+    restart: unless-stopped
     dns: ${DNS_IP_INTERNAL}
     external_links:
-      - operations-dns
+      - operations:dns
     depends_on:
       - elasticsearch
     networks:
@@ -49,14 +50,17 @@ services:
         fluentd-address: logger.finsec.localdomain:24224
         tag: "{{.Name}}.{{.ID}}"
         fluentd-async: "true"
+        fluentd-max-retries: "144"
+        fluentd-retry-wait: "600s"        
 
   fluentd:
     build: ./fluentd
     image: registry.finsec.localdomain/fluentd
     container_name: logs-fluentd
     dns: ${DNS_IP_INTERNAL}
+    restart: always
     external_links:
-      - operations-dns
+      - operations:dns
     depends_on:
       - elasticsearch
     volumes:
@@ -77,8 +81,9 @@ services:
     image: docker.elastic.co/kibana/kibana:7.4.2
     container_name: logs-kibana
     dns: ${DNS_IP_INTERNAL}
+    restart: unless-stopped
     external_links:
-      - operations-dns
+      - operations:dns
     depends_on:
       - elasticsearch
       - fluentd
@@ -97,14 +102,17 @@ services:
         fluentd-address: logger.finsec.localdomain:24224
         tag: "{{.Name}}.{{.ID}}"
         fluentd-async: "true"
+        fluentd-max-retries: "144"
+        fluentd-retry-wait: "600s"        
 
   kibana-proxy-internal:
     image: registry.finsec.localdomain/proxy-nginx
     container_name: logs-kibana-proxy-internal
     dns: ${DNS_IP_INTERNAL}
+    restart: unless-stopped
     external_links:
-      - operations-dns
-      - operations-proxy
+      - operations:dns
+      - operations:proxy
     healthcheck:
       test: ["CMD", "curl", "-k", "-f", "http://logs-kibana-proxy-internal"]
       interval: 60s
@@ -128,17 +136,20 @@ services:
         fluentd-address: logger.finsec.localdomain:24224
         tag: "{{.Name}}.{{.ID}}"
         fluentd-async: "true"
+        fluentd-max-retries: "144"
+        fluentd-retry-wait: "600s"        
 
   dejavu-proxy-internal:
     image: registry.finsec.localdomain/proxy-nginx
     container_name: logs-dejavu-proxy-internal
     dns: ${DNS_IP_INTERNAL}
+    restart: unless-stopped
     depends_on:
       - dejavu
       - fluentd
     external_links:
-      - operations-dns
-      - operations-proxy
+      - operations:dns
+      - operations:proxy
     healthcheck:
       test: ["CMD", "curl", "-k", "-f", "http://logs-dejavu-proxy-internal"]
       interval: 60s
@@ -159,13 +170,16 @@ services:
         fluentd-address: logger.finsec.localdomain:24224
         tag: "{{.Name}}.{{.ID}}"
         fluentd-async: "true"
+        fluentd-max-retries: "144"
+        fluentd-retry-wait: "600s"        
 
   elasticvue:
     image: cars10/elasticvue
     container_name: logs-elasticvue
     dns: ${DNS_IP_INTERNAL}
+    restart: unless-stopped
     external_links:
-      - operations-dns
+      - operations:dns
     depends_on:
       - elasticsearch
       - fluentd
@@ -178,17 +192,20 @@ services:
         fluentd-address: logger.finsec.localdomain:24224
         tag: "{{.Name}}.{{.ID}}"
         fluentd-async: "true"
+        fluentd-max-retries: "144"
+        fluentd-retry-wait: "600s"        
         
   elasticvue-proxy-internal:
     image: registry.finsec.localdomain/proxy-nginx
     container_name: logs-elasticvue-proxy-internal
     dns: ${DNS_IP_INTERNAL}
+    restart: unless-stopped
     depends_on:
       - elasticvue
       - fluentd
     external_links:
-      - operations-dns
-      - operations-proxy
+      - operations:dns
+      - operations:proxy
     healthcheck:
       test: ["CMD", "curl", "-k", "-f", "http://logs-elasticvue-proxy-internal"]
       interval: 60s
@@ -209,6 +226,8 @@ services:
         fluentd-address: logger.finsec.localdomain:24224
         tag: "{{.Name}}.{{.ID}}"
         fluentd-async: "true"
+        fluentd-max-retries: "144"
+        fluentd-retry-wait: "600s"        
 
 networks:
   operations_intranet:
