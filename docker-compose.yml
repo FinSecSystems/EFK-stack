@@ -10,7 +10,7 @@ services:
       - operations:dns
     environment:
       - discovery.type=single-node
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
       - "http.port=9200"
       - "http.cors.allow-origin=*,https://elastic.logs.finsec.localdomain,https://dejavu.finsec.localdomain"
       - "http.cors.enabled=true"
