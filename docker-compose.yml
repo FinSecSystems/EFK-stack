@@ -44,14 +44,14 @@ services:
         ipv4_address: 172.34.19.3
         aliases:
           - dejavu
-    logging:
-      driver: "fluentd"
-      options:
-        fluentd-address: logger.finsec.localdomain:24224
-        tag: "{{.Name}}.{{.ID}}"
-        fluentd-async: "true"
-        fluentd-max-retries: "144"
-        fluentd-retry-wait: "600s"        
+    # logging:
+    #   driver: "fluentd"
+    #   options:
+    #     fluentd-address: logger.finsec.localdomain:24224
+    #     tag: "{{.Name}}.{{.ID}}"
+    #     fluentd-async: "true"
+    #     fluentd-max-retries: "144"
+    #     fluentd-retry-wait: "600s"        
 
   fluentd:
     build: ./fluentd
@@ -96,14 +96,14 @@ services:
         ipv4_address: 172.34.19.5
         aliases:
           - kibana
-    logging:
-      driver: "fluentd"
-      options:
-        fluentd-address: logger.finsec.localdomain:24224
-        tag: "{{.Name}}.{{.ID}}"
-        fluentd-async: "true"
-        fluentd-max-retries: "144"
-        fluentd-retry-wait: "600s"        
+    # logging:
+    #   driver: "fluentd"
+    #   options:
+    #     fluentd-address: logger.finsec.localdomain:24224
+    #     tag: "{{.Name}}.{{.ID}}"
+    #     fluentd-async: "true"
+    #     fluentd-max-retries: "144"
+    #     fluentd-retry-wait: "600s"        
 
   kibana-proxy-internal:
     image: registry.finsec.localdomain/proxy-nginx
@@ -130,14 +130,14 @@ services:
     networks:
       operations_intranet:
         ipv4_address: 172.34.19.6
-    logging:
-      driver: "fluentd"
-      options:
-        fluentd-address: logger.finsec.localdomain:24224
-        tag: "{{.Name}}.{{.ID}}"
-        fluentd-async: "true"
-        fluentd-max-retries: "144"
-        fluentd-retry-wait: "600s"        
+    # logging:
+    #   driver: "fluentd"
+    #   options:
+    #     fluentd-address: logger.finsec.localdomain:24224
+    #     tag: "{{.Name}}.{{.ID}}"
+    #     fluentd-async: "true"
+    #     fluentd-max-retries: "144"
+    #     fluentd-retry-wait: "600s"        
 
   dejavu-proxy-internal:
     image: registry.finsec.localdomain/proxy-nginx
@@ -164,14 +164,14 @@ services:
     networks:
       operations_intranet:
         ipv4_address: 172.34.19.7
-    logging:
-      driver: "fluentd"
-      options:
-        fluentd-address: logger.finsec.localdomain:24224
-        tag: "{{.Name}}.{{.ID}}"
-        fluentd-async: "true"
-        fluentd-max-retries: "144"
-        fluentd-retry-wait: "600s"        
+    # logging:
+    #   driver: "fluentd"
+    #   options:
+    #     fluentd-address: logger.finsec.localdomain:24224
+    #     tag: "{{.Name}}.{{.ID}}"
+    #     fluentd-async: "true"
+    #     fluentd-max-retries: "144"
+    #     fluentd-retry-wait: "600s"        
 
   elasticvue:
     image: cars10/elasticvue
@@ -186,14 +186,14 @@ services:
     networks:
       operations_intranet:
         ipv4_address: 172.34.19.8
-    logging:
-      driver: "fluentd"
-      options:
-        fluentd-address: logger.finsec.localdomain:24224
-        tag: "{{.Name}}.{{.ID}}"
-        fluentd-async: "true"
-        fluentd-max-retries: "144"
-        fluentd-retry-wait: "600s"        
+    # logging:
+    #   driver: "fluentd"
+    #   options:
+    #     fluentd-address: logger.finsec.localdomain:24224
+    #     tag: "{{.Name}}.{{.ID}}"
+    #     fluentd-async: "true"
+    #     fluentd-max-retries: "144"
+    #     fluentd-retry-wait: "600s"        
         
   elasticvue-proxy-internal:
     image: registry.finsec.localdomain/proxy-nginx
@@ -220,14 +220,14 @@ services:
     networks:
       operations_intranet:
         ipv4_address: 172.34.19.9
-    logging:
-      driver: "fluentd"
-      options:
-        fluentd-address: logger.finsec.localdomain:24224
-        tag: "{{.Name}}.{{.ID}}"
-        fluentd-async: "true"
-        fluentd-max-retries: "144"
-        fluentd-retry-wait: "600s"        
+    # logging:
+    #   driver: "fluentd"
+    #   options:
+    #     fluentd-address: logger.finsec.localdomain:24224
+    #     tag: "{{.Name}}.{{.ID}}"
+    #     fluentd-async: "true"
+    #     fluentd-max-retries: "144"
+    #     fluentd-retry-wait: "600s"        
 
 networks:
   operations_intranet:
