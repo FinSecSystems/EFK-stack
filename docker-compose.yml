@@ -115,7 +115,7 @@ services:
       - operations:proxy
     healthcheck:
       test: ["CMD", "curl", "-k", "-f", "http://logs-kibana-proxy-internal"]
-      interval: 60s
+      interval: 300s
       timeout: 120s
       start_period: 100s
       retries: 5
@@ -152,7 +152,7 @@ services:
       - operations:proxy
     healthcheck:
       test: ["CMD", "curl", "-k", "-f", "http://logs-dejavu-proxy-internal"]
-      interval: 60s
+      interval: 300s
       timeout: 120s
       start_period: 100s
       retries: 5
@@ -208,7 +208,7 @@ services:
       - operations:proxy
     healthcheck:
       test: ["CMD", "curl", "-k", "-f", "http://logs-elasticvue-proxy-internal"]
-      interval: 60s
+      interval: 300s
       timeout: 120s
       start_period: 100s
       retries: 5
