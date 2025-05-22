@@ -1,21 +1,17 @@
-version: '3.4'
-
 services:
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.4.2
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.0.1
     container_name: logs-elasticsearch
     restart: always
     dns: ${DNS_IP_INTERNAL}
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -s http://logs-elasticsearch:9200/_cluster/health?pretty | grep status | grep -q '\\(green\\|yellow\\)'"]
+      interval: 5s
+      timeout: 3s    
     external_links:
       - operations:dns
-    environment:
-      - discovery.type=single-node
-      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
-      - "http.port=9200"
-      - "http.cors.allow-origin=*,https://elastic.logs.finsec.localdomain,https://dejavu.finsec.localdomain"
-      - "http.cors.enabled=true"
-      - "http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization"
-      - "http.cors.allow-credentials=true"
+    env_file:
+      - ./elasticsearch.env
     volumes:
       - ${DB_DIR}/logselasticsearch:/usr/share/elasticsearch/data
     ports:
@@ -33,7 +29,7 @@ services:
   dejavu:
     image: appbaseio/dejavu:latest
     container_name: logs-dejavu
-    restart: unless-stopped
+    restart: $(RESTART}
     dns: ${DNS_IP_INTERNAL}
     external_links:
       - operations:dns
@@ -78,10 +74,10 @@ services:
           - fluentd
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:7.4.2
+    image: docker.elastic.co/kibana/kibana:9.0.1
     container_name: logs-kibana
     dns: ${DNS_IP_INTERNAL}
-    restart: unless-stopped
+    restart: $(RESTART}
     external_links:
       - operations:dns
     depends_on:
@@ -109,7 +105,7 @@ services:
     image: registry.finsec.localdomain/proxy-nginx
     container_name: logs-kibana-proxy-internal
     dns: ${DNS_IP_INTERNAL}
-    restart: unless-stopped
+    restart: $(RESTART}
     external_links:
       - operations:dns
       - operations:proxy
@@ -143,7 +139,7 @@ services:
     image: registry.finsec.localdomain/proxy-nginx
     container_name: logs-dejavu-proxy-internal
     dns: ${DNS_IP_INTERNAL}
-    restart: unless-stopped
+    restart: $(RESTART}
     depends_on:
       - dejavu
       - fluentd
@@ -177,7 +173,7 @@ services:
     image: cars10/elasticvue
     container_name: logs-elasticvue
     dns: ${DNS_IP_INTERNAL}
-    restart: unless-stopped
+    restart: $(RESTART}
     external_links:
       - operations:dns
     depends_on:
@@ -199,7 +195,7 @@ services:
     image: registry.finsec.localdomain/proxy-nginx
     container_name: logs-elasticvue-proxy-internal
     dns: ${DNS_IP_INTERNAL}
-    restart: unless-stopped
+    restart: $(RESTART}
     depends_on:
       - elasticvue
       - fluentd

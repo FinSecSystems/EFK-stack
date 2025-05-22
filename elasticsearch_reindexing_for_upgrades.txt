@@ -1,0 +1,31 @@
+# First of all: enable blocks write to enable clonage
+PUT /docker-20240515/_settings
+{
+  "settings": {
+    "index.blocks.write": true
+  }
+}
+
+# clone index into a temporary index
+POST /docker-20240515/_clone/docker-20240515-000001  
+
+PUT /docker-20240515/_settings
+{
+  "settings": {
+    "index.blocks.write": false
+  }
+}
+
+# Copy back all documents in the original index to force their reindexetion
+POST /_reindex
+{
+  "source": {
+    "index": "docker-20240515-000001"
+  },
+  "dest": {
+    "index": "docker-20240515"
+  }
+}
+
+# Finaly delete the temporary index
+DELETE docker-20240515-000001
