@@ -29,7 +29,7 @@ services:
   dejavu:
     image: appbaseio/dejavu:latest
     container_name: logs-dejavu
-    restart: $(RESTART}
+    restart: ${RESTART}
     dns: ${DNS_IP_INTERNAL}
     external_links:
       - operations:dns
@@ -77,7 +77,7 @@ services:
     image: docker.elastic.co/kibana/kibana:9.0.1
     container_name: logs-kibana
     dns: ${DNS_IP_INTERNAL}
-    restart: $(RESTART}
+    restart: ${RESTART}
     external_links:
       - operations:dns
     depends_on:
@@ -105,7 +105,7 @@ services:
     image: registry.finsec.localdomain/proxy-nginx
     container_name: logs-kibana-proxy-internal
     dns: ${DNS_IP_INTERNAL}
-    restart: $(RESTART}
+    restart: ${RESTART}
     external_links:
       - operations:dns
       - operations:proxy
@@ -139,7 +139,7 @@ services:
     image: registry.finsec.localdomain/proxy-nginx
     container_name: logs-dejavu-proxy-internal
     dns: ${DNS_IP_INTERNAL}
-    restart: $(RESTART}
+    restart: ${RESTART}
     depends_on:
       - dejavu
       - fluentd
@@ -173,7 +173,7 @@ services:
     image: cars10/elasticvue
     container_name: logs-elasticvue
     dns: ${DNS_IP_INTERNAL}
-    restart: $(RESTART}
+    restart: ${RESTART}
     external_links:
       - operations:dns
     depends_on:
@@ -195,7 +195,7 @@ services:
     image: registry.finsec.localdomain/proxy-nginx
     container_name: logs-elasticvue-proxy-internal
     dns: ${DNS_IP_INTERNAL}
-    restart: $(RESTART}
+    restart: ${RESTART}
     depends_on:
       - elasticvue
       - fluentd
