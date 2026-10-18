@@ -27,7 +27,7 @@ services:
         hard: -1
 
   dejavu:
-    image: appbaseio/dejavu:latest
+    image: appbaseio/dejavu@sha256:9252eb473e1a43ec4a16c6194575a29226c6ea43e43142b0950ff6de255f2778  # pinned digest (was dejavu:latest; version unknown, 2026-10-18)
     container_name: logs-dejavu
     restart: ${RESTART}
     dns: ${DNS_IP_INTERNAL}
@@ -170,7 +170,7 @@ services:
     #     fluentd-retry-wait: "600s"        
 
   elasticvue:
-    image: cars10/elasticvue
+    image: cars10/elasticvue@sha256:337b192ccad1c2ee4013ecf37643417787f94ab4acc527591bf60884b459aafb  # pinned digest (was untagged; 1.27.4-alpine, 2026-10-18)
     container_name: logs-elasticvue
     dns: ${DNS_IP_INTERNAL}
     restart: ${RESTART}
