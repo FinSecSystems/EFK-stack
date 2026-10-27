@@ -40,14 +40,6 @@ services:
         ipv4_address: 172.34.19.3
         aliases:
           - dejavu
-    # logging:
-    #   driver: "fluentd"
-    #   options:
-    #     fluentd-address: logger.finsec.localdomain:24224
-    #     tag: "{{.Name}}.{{.ID}}"
-    #     fluentd-async: "true"
-    #     fluentd-max-retries: "144"
-    #     fluentd-retry-wait: "600s"        
 
   fluentd:
     build: ./fluentd
@@ -59,9 +51,16 @@ services:
       - operations:dns
     depends_on:
       - elasticsearch
+    environment:
+      # first start on a new state volume only: READ_FROM_HEAD=false records the end of every existing container log instead of sending 2 GB of old lines
+      READ_FROM_HEAD: ${READ_FROM_HEAD:-true}
     volumes:
       - ./fluentd/conf:/fluentd/etc
-      - ${DATA_DIR}/logs/fluentd:/logs
+      - ./fluentd/plugins:/fluentd/plugins
+      # Docker's json-file logs of all containers, read only; Fluentd tails them (no container depends on Fluentd)
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      # position file and buffer: local volume, never NFS (a hung NAS must not hang Fluentd)
+      - fluentd-state:/fluentd/state
     ports:
       - "${LOG_SERVER_IP}:24224:24224"
       - "${LOG_SERVER_IP}:24224:24224/udp"
@@ -92,14 +91,6 @@ services:
         ipv4_address: 172.34.19.5
         aliases:
           - kibana
-    # logging:
-    #   driver: "fluentd"
-    #   options:
-    #     fluentd-address: logger.finsec.localdomain:24224
-    #     tag: "{{.Name}}.{{.ID}}"
-    #     fluentd-async: "true"
-    #     fluentd-max-retries: "144"
-    #     fluentd-retry-wait: "600s"        
 
   kibana-proxy-internal:
     image: registry.finsec.localdomain/proxy-nginx
@@ -126,14 +117,6 @@ services:
     networks:
       operations_intranet:
         ipv4_address: 172.34.19.6
-    # logging:
-    #   driver: "fluentd"
-    #   options:
-    #     fluentd-address: logger.finsec.localdomain:24224
-    #     tag: "{{.Name}}.{{.ID}}"
-    #     fluentd-async: "true"
-    #     fluentd-max-retries: "144"
-    #     fluentd-retry-wait: "600s"        
 
   dejavu-proxy-internal:
     image: registry.finsec.localdomain/proxy-nginx
@@ -160,14 +143,6 @@ services:
     networks:
       operations_intranet:
         ipv4_address: 172.34.19.7
-    # logging:
-    #   driver: "fluentd"
-    #   options:
-    #     fluentd-address: logger.finsec.localdomain:24224
-    #     tag: "{{.Name}}.{{.ID}}"
-    #     fluentd-async: "true"
-    #     fluentd-max-retries: "144"
-    #     fluentd-retry-wait: "600s"        
 
   elasticvue:
     image: cars10/elasticvue@sha256:337b192ccad1c2ee4013ecf37643417787f94ab4acc527591bf60884b459aafb  # pinned digest (was untagged; 1.27.4-alpine, 2026-10-18)
@@ -182,14 +157,6 @@ services:
     networks:
       operations_intranet:
         ipv4_address: 172.34.19.8
-    # logging:
-    #   driver: "fluentd"
-    #   options:
-    #     fluentd-address: logger.finsec.localdomain:24224
-    #     tag: "{{.Name}}.{{.ID}}"
-    #     fluentd-async: "true"
-    #     fluentd-max-retries: "144"
-    #     fluentd-retry-wait: "600s"        
         
   elasticvue-proxy-internal:
     image: registry.finsec.localdomain/proxy-nginx
@@ -216,14 +183,9 @@ services:
     networks:
       operations_intranet:
         ipv4_address: 172.34.19.9
-    # logging:
-    #   driver: "fluentd"
-    #   options:
-    #     fluentd-address: logger.finsec.localdomain:24224
-    #     tag: "{{.Name}}.{{.ID}}"
-    #     fluentd-async: "true"
-    #     fluentd-max-retries: "144"
-    #     fluentd-retry-wait: "600s"        
+
+volumes:
+  fluentd-state:
 
 networks:
   operations_intranet:
