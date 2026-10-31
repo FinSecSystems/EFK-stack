@@ -149,6 +149,9 @@ services:
     container_name: logs-elasticvue
     dns: ${DNS_IP_INTERNAL}
     restart: ${RESTART}
+    environment:
+      # preset cluster: the browser reaches Elasticsearch through the /es proxy of elasticvue-nginx.conf
+      ELASTICVUE_CLUSTERS: '[{"name": "logs", "uri": "https://elastic.logs.finsec.localdomain/es"}]'
     external_links:
       - operations:dns
     depends_on:
