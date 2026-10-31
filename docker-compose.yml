@@ -1,6 +1,6 @@
 services:
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:9.0.1
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.5.5
     container_name: logs-elasticsearch
     restart: always
     dns: ${DNS_IP_INTERNAL}
@@ -68,7 +68,7 @@ services:
           - fluentd
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:9.0.1
+    image: docker.elastic.co/kibana/kibana:9.5.5
     container_name: logs-kibana
     dns: ${DNS_IP_INTERNAL}
     restart: ${RESTART}
@@ -96,7 +96,7 @@ services:
       - operations:dns
       - operations:proxy
     healthcheck:
-      test: ["CMD", "curl", "-k", "-f", "http://logs-kibana-proxy-internal"]
+      test: ["CMD", "curl", "-k", "-f", "http://logs-kibana-proxy-internal/nginx-health"]
       interval: 300s
       timeout: 120s
       start_period: 100s
@@ -125,7 +125,7 @@ services:
       - operations:dns
       - operations:proxy
     healthcheck:
-      test: ["CMD", "curl", "-k", "-f", "http://logs-dejavu-proxy-internal"]
+      test: ["CMD", "curl", "-k", "-f", "http://logs-dejavu-proxy-internal/nginx-health"]
       interval: 300s
       timeout: 120s
       start_period: 100s
@@ -168,7 +168,7 @@ services:
       - operations:dns
       - operations:proxy
     healthcheck:
-      test: ["CMD", "curl", "-k", "-f", "http://logs-elasticvue-proxy-internal"]
+      test: ["CMD", "curl", "-k", "-f", "http://logs-elasticvue-proxy-internal/nginx-health"]
       interval: 300s
       timeout: 120s
       start_period: 100s
