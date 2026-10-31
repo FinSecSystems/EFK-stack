@@ -60,11 +60,7 @@ services:
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       # position file and buffer: local volume, never NFS (a hung NAS must not hang Fluentd)
       - fluentd-state:/fluentd/state
-    ports:
-      - "${LOG_SERVER_IP}:24224:24224"
-      - "${LOG_SERVER_IP}:24224:24224/udp"
-      - "${LOG_SERVER_IP}:9880:9880"
-      - "${LOG_SERVER_IP}:9880:9880/udp"
+    # no published ports: Fluentd tails the log files and nothing sends to its forward (24224) or http (9880) inputs from outside; they stay reachable on operations_intranet
     networks:
       operations_intranet:
         ipv4_address: 172.34.19.4
