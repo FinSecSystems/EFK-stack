@@ -14,8 +14,7 @@ services:
       - ./elasticsearch.env
     volumes:
       - ${DB_DIR}/logselasticsearch:/usr/share/elasticsearch/data
-    ports:
-      - "${LOG_SERVER_IP}:9200:9200"
+    # no published port: Elasticsearch has no security, only the Docker network reaches it (Kibana, Fluentd, the /es proxies of Dejavu and Elasticvue)
     networks:
       operations_intranet:
         ipv4_address: 172.34.19.2
